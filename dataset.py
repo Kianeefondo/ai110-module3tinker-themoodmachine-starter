@@ -23,6 +23,11 @@ POSITIVE_WORDS = [
     "chill",
     "relaxed",
     "amazing",
+    "hopeful",
+    "proud",
+    "fire",
+    "sick",
+    "stoked",
 ]
 
 NEGATIVE_WORDS = [
@@ -36,6 +41,7 @@ NEGATIVE_WORDS = [
     "stressed",
     "hate",
     "boring",
+    "exhausted",
 ]
 
 # ---------------------------------------------------------------------
@@ -50,6 +56,15 @@ SAMPLE_POSTS = [
     "This is fine",
     "So excited for the weekend",
     "I am not happy about this",
+
+    "I love seeing the sun outside",
+    "I hate leaving the house on a nice day",
+    "Feeling like a million bucks!",
+    "This is so boring",
+    "Can't wait for the party tonight!",
+    "I am always tired but totally stoked that I finished this project",
+    "Nothing is working and I feel awful",
+    "I'm weirdly thrilled to be so exhausted"
 ]
 
 # Human labels for each post above.
@@ -65,6 +80,15 @@ TRUE_LABELS = [
     "neutral",   # "This is fine"
     "positive",  # "So excited for the weekend"
     "negative",  # "I am not happy about this"
+
+    "positive",  # "I love seeing the sun outside"
+    "negative",  # "I hate leaving the house on a nice day"
+    "positive",  # "Feeling like a million bucks!"
+    "negative",  # "This is so boring"
+    "positive",  # "Can't wait for the party tonight!"
+    "mixed",    # "I am always tired but totally stoked that I finished this project"
+    "negative", # "Nothing is working and I feel awful"
+    "mixed",    # "I'm weirdly thrilled to be so exhausted"
 ]
 
 # TODO: Add 5-10 more posts and labels.

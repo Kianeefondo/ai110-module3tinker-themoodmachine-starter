@@ -12,6 +12,8 @@ This class starts with very simple logic:
 from typing import List, Dict, Tuple, Optional
 
 from dataset import POSITIVE_WORDS, NEGATIVE_WORDS
+import re
+import string
 
 
 class MoodAnalyzer:
@@ -53,6 +55,10 @@ class MoodAnalyzer:
           - Normalize repeated characters ("soooo" -> "soo")
         """
         cleaned = text.strip().lower()
+        # Remove punctuation
+        cleaned = cleaned.translate(str.maketrans('', '', string.punctuation))
+        # Normalize repeated characters
+        cleaned = re.sub(r'(.)\1{2,}', r'\1\1', cleaned)
         tokens = cleaned.split()
 
         return tokens
@@ -61,7 +67,7 @@ class MoodAnalyzer:
     # Scoring logic
     # ---------------------------------------------------------------------
 
-    def score_text(self, text: str) -> int:
+    def score_text(self, text: str) -> Tuple[int, bool, bool]:
         """
         Compute a numeric "mood score" for the given text.
 
@@ -75,15 +81,36 @@ class MoodAnalyzer:
           - Give some words higher weights than others (for example "hate" < "annoyed")
           - Treat emojis or slang (":)", "lol", "💀") as strong signals
         """
-        # TODO: Implement this method.
-        #   1. Call self.preprocess(text) to get tokens.
-        #   2. Loop over the tokens.
-        #   3. Increase the score for positive words, decrease for negative words.
-        #   4. Return the total score.
-        #
-        # Hint: if you implement negation, you may want to look at pairs of tokens,
-        # like ("not", "happy") or ("never", "fun").
-        pass
+        tokens = self.preprocess(text)
+        score = 0
+        has_positive = False
+        has_negative = False
+        i = 0
+        negation_words = {"not", "never", "no", "dont", "cant", "wont"}  # add common contractions
+        while i < len(tokens):
+            token = tokens[i]
+            if token in negation_words:
+                # Look ahead for the next word
+                if i + 1 < len(tokens):
+                    next_token = tokens[i + 1]
+                    if next_token in self.positive_words:
+                        score -= 1  # not happy -> negative
+                        has_negative = True
+                    elif next_token in self.negative_words:
+                        score += 1  # not bad -> positive
+                        has_positive = True
+                    i += 2  # Skip the next token
+                else:
+                    i += 1
+            else:
+                if token in self.positive_words:
+                    score += 1
+                    has_positive = True
+                elif token in self.negative_words:
+                    score -= 1
+                    has_negative = True
+                i += 1
+        return score, has_positive, has_negative
 
     # ---------------------------------------------------------------------
     # Label prediction
@@ -105,12 +132,15 @@ class MoodAnalyzer:
         Just remember that whatever labels you return should match the labels
         you use in TRUE_LABELS in dataset.py if you care about accuracy.
         """
-        # TODO: Implement this method.
-        #   1. Call self.score_text(text) to get the numeric score.
-        #   2. Return "positive" if the score is above 0.
-        #   3. Return "negative" if the score is below 0.
-        #   4. Return "neutral" otherwise.
-        pass
+        score, has_positive, has_negative = self.score_text(text)
+        if score > 0:
+            return "positive"
+        elif score < 0:
+            return "negative"
+        elif has_positive and has_negative:
+            return "mixed"
+        else:
+            return "neutral"
 
     # ---------------------------------------------------------------------
     # Explanations (optional but recommended)
@@ -137,14 +167,36 @@ class MoodAnalyzer:
         positive_hits: List[str] = []
         negative_hits: List[str] = []
         score = 0
-
-        for token in tokens:
-            if token in self.positive_words:
-                positive_hits.append(token)
-                score += 1
-            if token in self.negative_words:
-                negative_hits.append(token)
-                score -= 1
+        has_positive = False
+        has_negative = False
+        i = 0
+        negation_words = {"not", "never", "no", "dont", "cant", "wont"}
+        while i < len(tokens):
+            token = tokens[i]
+            if token in negation_words:
+                if i + 1 < len(tokens):
+                    next_token = tokens[i + 1]
+                    if next_token in self.positive_words:
+                        score -= 1
+                        negative_hits.append(f"not {next_token}")
+                        has_negative = True
+                    elif next_token in self.negative_words:
+                        score += 1
+                        positive_hits.append(f"not {next_token}")
+                        has_positive = True
+                    i += 2
+                else:
+                    i += 1
+            else:
+                if token in self.positive_words:
+                    positive_hits.append(token)
+                    score += 1
+                    has_positive = True
+                elif token in self.negative_words:
+                    negative_hits.append(token)
+                    score -= 1
+                    has_negative = True
+                i += 1
 
         return (
             f"Score = {score} "
